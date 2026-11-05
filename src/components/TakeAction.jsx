@@ -188,7 +188,7 @@ export default function TakeAction() {
   return (
     <section
       id="take-action"
-      className="scroll-mt-16 py-28 sm:py-36 relative bg-[#041A12] border-t border-[#39B86B]/15 overflow-hidden text-[#F3F7EF]"
+      className="scroll-mt-20 py-28 sm:py-36 relative bg-[#041A12] border-t border-[#39B86B]/15 overflow-hidden text-[#F3F7EF]"
     >
       {/* Background Ambient Lighting Blobs */}
       <div

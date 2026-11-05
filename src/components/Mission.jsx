@@ -55,7 +55,7 @@ export default function Mission() {
   return (
     <section
       id="mission"
-      className="scroll-mt-16 py-28 sm:py-36 relative bg-[#041A12] border-t border-[#39B86B]/15 overflow-hidden"
+      className="scroll-mt-20 py-28 sm:py-36 relative bg-[#041A12] border-t border-[#39B86B]/15 overflow-hidden"
     >
       {/* Ambient Atmospheric Lighting Blobs */}
       <div

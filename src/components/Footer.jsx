@@ -6,7 +6,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-[#041A12] border-t border-[#39B86B]/20 py-12 relative z-10">
+    <footer className="bg-[#041A12] border-t border-[#39B86B]/20 py-12 relative z-10 overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-[#39B86B]/15">
           {/* Brand */}

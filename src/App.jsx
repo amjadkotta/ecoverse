@@ -11,12 +11,12 @@ import './App.css'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#041A12] text-[#F3F7EF] flex flex-col selection:bg-[#B8F34A] selection:text-[#041A12]">
+    <div className="min-h-screen bg-[#041A12] text-[#F3F7EF] flex flex-col selection:bg-[#B8F34A] selection:text-[#041A12] w-full max-w-full">
       {/* Navigation */}
       <Navbar />
 
       {/* Main Content */}
-      <main className="flex-grow">
+      <main className="flex-grow w-full max-w-full">
         {/* Hero Section */}
         <Hero />
 

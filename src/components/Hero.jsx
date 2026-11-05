@@ -20,7 +20,7 @@ function EarthLoadingFallback() {
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen flex flex-col justify-between pt-32 pb-12 overflow-hidden gradient-mesh">
+    <section id="home" className="relative min-h-screen flex flex-col justify-between pt-32 pb-12 overflow-hidden gradient-mesh">
       {/* Background Atmospheric Glow Halos */}
       <div
         aria-hidden="true"
@@ -112,7 +112,7 @@ export default function Hero() {
             transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
             className="lg:col-span-5 flex items-center justify-center relative"
           >
-            <div className="relative w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] md:w-[440px] md:h-[440px] flex items-center justify-center">
+            <div className="relative w-[300px] h-[300px] max-w-[calc(100vw-2rem)] aspect-square sm:w-[380px] sm:h-[380px] md:w-[440px] md:h-[440px] flex items-center justify-center">
               {/* Outer Atmospheric Aura */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#39B86B]/25 via-[#B8F34A]/20 to-transparent blur-3xl animate-pulse" />
 

@@ -330,7 +330,7 @@ export default function Solutions() {
   return (
     <section
       id="solutions"
-      className="py-28 sm:py-32 relative bg-[#041A12] border-t border-[#39B86B]/15 overflow-hidden"
+      className="scroll-mt-20 py-28 sm:py-32 relative bg-[#041A12] border-t border-[#39B86B]/15 overflow-hidden"
     >
       {/* Decorative Atmospheric Lighting Elements */}
       <div

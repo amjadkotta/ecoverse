@@ -51,7 +51,7 @@ export default function ImpactStats() {
   ]
 
   return (
-    <section id="stats" className="py-24 relative bg-[#041A12] border-t border-[#39B86B]/15">
+    <section id="stats" className="py-24 relative bg-[#041A12] border-t border-[#39B86B]/15 overflow-hidden">
       {/* Background ambient lighting */}
       <div
         aria-hidden="true"

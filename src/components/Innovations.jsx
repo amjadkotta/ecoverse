@@ -444,7 +444,7 @@ export default function Innovations() {
   return (
     <section
       id="innovations"
-      className="py-28 sm:py-32 relative bg-[#08291C]/50 border-t border-[#39B86B]/15 overflow-hidden"
+      className="scroll-mt-20 py-28 sm:py-32 relative bg-[#08291C]/50 border-t border-[#39B86B]/15 overflow-hidden"
     >
       {/* Decorative Atmospheric Lighting Elements */}
       <div
