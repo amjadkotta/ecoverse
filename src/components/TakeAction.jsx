@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import useEcoJourney from '../hooks/useEcoJourney'
 import {
   Sparkles,
   TreePine,
@@ -784,6 +785,9 @@ export default function TakeAction() {
   const [certificateDownloaded, setCertificateDownloaded] = useState(false)
   const [certificateError, setCertificateError] = useState(null)
 
+  // Eco Journey integration: record pledge and unlock Pledge Pioneer badge
+  const { recordGreenPledge, hasTakenGreenPledge } = useEcoJourney()
+
   // Toggle selection
   const toggleCommitment = (id) => {
     setSelectedCommitments((prev) =>
@@ -803,12 +807,22 @@ export default function TakeAction() {
   const handleMakePledge = (e) => {
     e.preventDefault()
     if (selectedCommitments.length === 0) return
-    setPledgeTimestamp(new Date().toLocaleDateString(undefined, {
+    const formattedDate = new Date().toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    }))
+    })
+    setPledgeTimestamp(formattedDate)
     setIsPledged(true)
+
+    // Safely and idempotently award +50 Eco Points and unlock Pledge Pioneer badge in Eco Journey
+    try {
+      if (typeof recordGreenPledge === 'function') {
+        recordGreenPledge()
+      }
+    } catch {
+      // Graceful fallback if storage is restricted
+    }
   }
 
   // Edit / update pledge
@@ -1286,10 +1300,20 @@ export default function TakeAction() {
                         </div>
                       </div>
 
-                      <p className="text-sm text-[#F3F7EF]/90 leading-relaxed">
+                      <p className="text-sm text-[#F3F7EF]/90 leading-relaxed mb-4">
                         Thank you for stepping forward. Your commitments have been verified in your
                         personal browser session. Every small action builds our shared tomorrow.
                       </p>
+
+                      {/* Eco Journey Gamification Recognition Badge */}
+                      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#B8F34A]/15 border border-[#B8F34A]/40 text-xs font-mono font-bold text-[#B8F34A] shadow-[0_0_15px_rgba(184,243,74,0.2)]">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>
+                          {hasTakenGreenPledge
+                            ? '+50 Eco Points & Pledge Pioneer Badge Recorded in Eco Journey!'
+                            : '+50 Eco Points & Pledge Pioneer Badge Unlocked!'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Active Selected Commitments List */}

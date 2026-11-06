@@ -5,6 +5,7 @@ import Introduction from './components/Introduction'
 import Mission from './components/Mission'
 import Solutions from './components/Solutions'
 import Innovations from './components/Innovations'
+import EcoJourney from './components/eco-journey/EcoJourney'
 import TakeAction from './components/TakeAction'
 import Footer from './components/Footer'
 import './App.css'
@@ -34,6 +35,9 @@ export default function App() {
 
         {/* Green Innovations Section */}
         <Innovations />
+
+        {/* Eco Journey Gamification System */}
+        <EcoJourney />
 
         {/* Take Action Section */}
         <TakeAction />

@@ -19,6 +19,7 @@ export default function Navbar() {
     { name: 'Our Mission', href: '#mission' },
     { name: 'Solutions', href: '#solutions' },
     { name: 'Innovations', href: '#innovations' },
+    { name: 'Eco Journey', href: '#eco-journey' },
   ]
 
   const handleNavClick = (e, href) => {
@@ -101,13 +102,13 @@ export default function Navbar() {
           </a>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 bg-[#08291C]/60 backdrop-blur-md px-5 py-2 rounded-full border border-[#39B86B]/20">
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 bg-[#08291C]/60 backdrop-blur-md px-3.5 xl:px-5 py-2 rounded-full border border-[#39B86B]/20">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="px-4 py-1.5 text-sm font-medium text-[#A4B6A8] hover:text-[#B8F34A] hover:bg-[#0D3524]/50 rounded-full transition-all duration-200"
+                className="px-3 xl:px-4 py-1.5 text-xs xl:text-sm font-medium text-[#A4B6A8] hover:text-[#B8F34A] hover:bg-[#0D3524]/50 rounded-full transition-all duration-200 whitespace-nowrap"
               >
                 {link.name}
               </a>
