@@ -16,7 +16,7 @@ export default function Navbar() {
   }, [])
 
   const navLinks = [
-    { name: 'Home', href: '#' },
+    { name: 'Home', href: '#home' },
     { name: 'Our Mission', href: '#mission' },
     { name: 'Solutions', href: '#solutions' },
     { name: 'Innovations', href: '#innovations' },
@@ -35,26 +35,57 @@ export default function Navbar() {
       document.activeElement.blur()
     }
 
-    if (href === '#' || href === '#home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Ensure body scroll is unlocked in case any modal state was left over
+    if (document.body && document.body.style.overflow === 'hidden') {
+      document.body.style.overflow = ''
+    }
+
+    const isHome = href === '#' || href === '#home'
+
+    // Update history/hash cleanly before delayed scroll
+    if (isHome) {
       if (window.location.hash) {
         window.history.pushState(null, '', window.location.pathname)
       }
-      return
+    } else {
+      window.history.pushState(null, '', href)
     }
 
-    const targetId = href.replace('#', '')
-    const targetElement = document.getElementById(targetId)
+    // 60ms delay allows mobile touch gesture to conclude and drawer collapse animation to start smoothly
+    setTimeout(() => {
+      if (isHome) {
+        // Primary coordinate-based smooth scroll to absolute top
+        try {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+          })
+        } catch {
+          window.scrollTo(0, 0)
+        }
 
-    if (targetElement) {
-      // Calculate target position with fixed header offset (~80px)
-      const headerOffset = 80
-      const rect = targetElement.getBoundingClientRect()
-      const currentScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0
-      const targetPosition = Math.max(0, rect.top + currentScroll - headerOffset)
+        // Secondary native scrollIntoView fallback targeting #home Hero section
+        const homeElement = document.getElementById('home')
+        if (homeElement && typeof homeElement.scrollIntoView === 'function') {
+          try {
+            homeElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          } catch {
+            // Handled by window.scrollTo
+          }
+        }
+        return
+      }
 
-      // 60ms delay allows mobile touch gesture to conclude and drawer collapse animation to start smoothly
-      setTimeout(() => {
+      const targetId = href.replace('#', '')
+      const targetElement = document.getElementById(targetId)
+
+      if (targetElement) {
+        // Calculate target position with fixed header offset (~80px)
+        const headerOffset = 80
+        const rect = targetElement.getBoundingClientRect()
+        const currentScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0
+        const targetPosition = Math.max(0, rect.top + currentScroll - headerOffset)
+
         // Primary coordinate-based smooth scroll
         window.scrollTo({
           top: targetPosition,
@@ -67,10 +98,8 @@ export default function Navbar() {
         } catch {
           // Fallback handled by window.scrollTo
         }
-      }, 60)
-
-      window.history.pushState(null, '', href)
-    }
+      }
+    }, 60)
   }
 
   return (
@@ -85,8 +114,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between gap-2">
           {/* Brand Logo */}
           <a
-            href="#"
-            onClick={(e) => handleNavClick(e, '#')}
+            href="#home"
+            onClick={(e) => handleNavClick(e, '#home')}
             className="group focus:outline-none min-w-0"
             aria-label="ECOVERSE Home"
           >
