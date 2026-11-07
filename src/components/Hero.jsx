@@ -53,10 +53,12 @@ export default function Hero() {
             >
               <span className="w-2 h-2 rounded-full bg-[#B8F34A] animate-ping" />
               <span className="text-[#B8F34A] font-semibold tracking-wide uppercase">
-                TerraCode 2026
+                GREEN TOMORROW
               </span>
               <span className="text-[#A4B6A8]">•</span>
-              <span className="text-[#F3F7EF]">Green Tomorrow</span>
+              <span className="text-[#F3F7EF] font-medium tracking-wide">
+                A SUSTAINABLE FUTURE
+              </span>
             </motion.div>
 
             {/* Main Headline */}

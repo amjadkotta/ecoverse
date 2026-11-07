@@ -165,7 +165,7 @@ export default function ImpactStats() {
           <p className="text-xs text-[#A4B6A8]/80 max-w-3xl mx-auto italic">
             * <strong className="text-[#A4B6A8]">Illustrative Benchmark Notice:</strong> The
             figures above represent illustrative planetary modeling benchmarks and strategic
-            targets created for the TerraCode sustainability initiative; they are not presented
+            targets created for the ECOVERSE sustainability initiative; they are not presented
             as verified empirical historical totals.
           </p>
         </div>

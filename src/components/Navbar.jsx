@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Leaf, Menu, X, ArrowUpRight } from 'lucide-react'
+import { Menu, X, ArrowUpRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import EcoverseLogo from './EcoverseLogo'
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -85,20 +86,10 @@ export default function Navbar() {
           <a
             href="#"
             onClick={(e) => handleNavClick(e, '#')}
-            className="flex items-center gap-2.5 sm:gap-3 group focus:outline-none min-w-0"
+            className="group focus:outline-none min-w-0"
             aria-label="ECOVERSE Home"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#B8F34A] to-[#39B86B] flex items-center justify-center text-[#041A12] shadow-[0_0_20px_rgba(184,243,74,0.35)] group-hover:shadow-[0_0_25px_rgba(184,243,74,0.6)] group-hover:scale-105 transition-all duration-300 shrink-0">
-              <Leaf className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-heading font-extrabold text-lg sm:text-xl tracking-wider text-[#F3F7EF] group-hover:text-white transition-colors truncate">
-                ECOVERSE
-              </span>
-              <span className="text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest text-[#B8F34A] font-medium uppercase -mt-0.5 sm:-mt-1 whitespace-nowrap">
-                The Future is Green
-              </span>
-            </div>
+            <EcoverseLogo />
           </a>
 
           {/* Desktop Navigation Links */}
