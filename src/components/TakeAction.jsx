@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import useEcoJourney from '../hooks/useEcoJourney'
 import {
@@ -19,13 +19,28 @@ import {
   ShieldCheck,
   Download,
   AlertCircle,
+  Upload,
+  Eye,
+  Lock,
+  Trash2,
+  Camera,
+  RefreshCw,
 } from 'lucide-react'
 
 /**
  * Generates a high-quality 1200x800 PNG pledge certificate on an offscreen HTML5 canvas.
- * Designed as a premium futuristic environmental certificate featuring a cinematic 3D Earth globe.
+ * Designed as a premium futuristic environmental certificate featuring a cinematic 3D Earth globe
+ * and optional personalized portrait badge & recipient name.
  */
-async function generatePledgeCertificateCanvas(selectedPledges, pledgeDate) {
+async function generatePledgeCertificateCanvas(selectedPledges, pledgeDate, options = {}) {
+  const {
+    userName = '',
+    userPhoto = null,
+    photoScale = 1.0,
+    photoOffsetY = 0,
+    photoOffsetX = 0,
+    certificateId = '',
+  } = options
   // Await font rendering readiness if document.fonts is supported
   if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
     try {
@@ -192,23 +207,186 @@ async function generatePledgeCertificateCanvas(selectedPledges, pledgeDate) {
   ctx.lineWidth = 1
   ctx.stroke()
 
-  // 5. Title & Sustainability Promise
+  // 5. Title & Personalization Area (Recipient, Photograph Badge, Sustainability Promise)
+  const hasPhoto = Boolean(userPhoto)
+  const portraitBadgeCenterX = 136
+  const portraitBadgeCenterY = 226
+  const portraitBadgeRadius = 48
+
+  // Draw Portrait Frame (Photograph or Official Stewardship Seal)
+  ctx.save()
+
+  // Ambient back-glow for portrait badge
+  const badgeGlow = ctx.createRadialGradient(
+    portraitBadgeCenterX,
+    portraitBadgeCenterY,
+    10,
+    portraitBadgeCenterX,
+    portraitBadgeCenterY,
+    portraitBadgeRadius * 1.5
+  )
+  badgeGlow.addColorStop(0, 'rgba(184, 243, 74, 0.25)')
+  badgeGlow.addColorStop(0.6, 'rgba(57, 184, 107, 0.12)')
+  badgeGlow.addColorStop(1, 'rgba(4, 26, 18, 0)')
+  ctx.fillStyle = badgeGlow
+  ctx.beginPath()
+  ctx.arc(portraitBadgeCenterX, portraitBadgeCenterY, portraitBadgeRadius * 1.5, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Outer decorative dashed ring
+  ctx.beginPath()
+  ctx.arc(portraitBadgeCenterX, portraitBadgeCenterY, portraitBadgeRadius + 6, 0, Math.PI * 2)
+  ctx.strokeStyle = 'rgba(184, 243, 74, 0.35)'
+  ctx.lineWidth = 1.2
+  ctx.setLineDash([4, 6])
+  ctx.stroke()
+  ctx.setLineDash([])
+
+  // Middle ring
+  ctx.beginPath()
+  ctx.arc(portraitBadgeCenterX, portraitBadgeCenterY, portraitBadgeRadius + 3, 0, Math.PI * 2)
+  ctx.strokeStyle = 'rgba(57, 184, 107, 0.5)'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  if (hasPhoto) {
+    // Clip to circle and draw user's uploaded photograph
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(portraitBadgeCenterX, portraitBadgeCenterY, portraitBadgeRadius, 0, Math.PI * 2)
+    ctx.clip()
+
+    // Background fill in case photo has transparency
+    ctx.fillStyle = '#08291C'
+    ctx.fillRect(
+      portraitBadgeCenterX - portraitBadgeRadius,
+      portraitBadgeCenterY - portraitBadgeRadius,
+      portraitBadgeRadius * 2,
+      portraitBadgeRadius * 2
+    )
+
+    // Calculate cover fit scale and user positioning
+    const photoD = portraitBadgeRadius * 2
+    const baseScale = Math.max(photoD / userPhoto.width, photoD / userPhoto.height)
+    const effectiveScale = baseScale * (photoScale || 1.0)
+    const dw = userPhoto.width * effectiveScale
+    const dh = userPhoto.height * effectiveScale
+    const dwOffset = ((photoOffsetX || 0) / 100) * dw
+    const dhOffset = ((photoOffsetY || 0) / 100) * dh
+    const dx = portraitBadgeCenterX - dw / 2 + dwOffset
+    const dy = portraitBadgeCenterY - dh / 2 + dhOffset
+
+    ctx.drawImage(userPhoto, dx, dy, dw, dh)
+    ctx.restore()
+  } else {
+    // Elegant Official Stewardship Emblem Seal when no photograph is uploaded
+    ctx.beginPath()
+    ctx.arc(portraitBadgeCenterX, portraitBadgeCenterY, portraitBadgeRadius, 0, Math.PI * 2)
+    const sealGrad = ctx.createLinearGradient(
+      portraitBadgeCenterX - portraitBadgeRadius,
+      portraitBadgeCenterY - portraitBadgeRadius,
+      portraitBadgeCenterX + portraitBadgeRadius,
+      portraitBadgeCenterY + portraitBadgeRadius
+    )
+    sealGrad.addColorStop(0, '#0D3524')
+    sealGrad.addColorStop(0.5, '#08291C')
+    sealGrad.addColorStop(1, '#041A12')
+    ctx.fillStyle = sealGrad
+    ctx.fill()
+
+    // Stylized botanical emblem inside seal
+    ctx.save()
+    ctx.translate(portraitBadgeCenterX, portraitBadgeCenterY)
+
+    // Ambient inner glow
+    ctx.beginPath()
+    ctx.arc(0, 0, 32, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(184, 243, 74, 0.08)'
+    ctx.fill()
+
+    // Leaf symbol
+    ctx.beginPath()
+    ctx.moveTo(0, 22)
+    ctx.bezierCurveTo(-18, 12, -22, -10, 0, -22)
+    ctx.bezierCurveTo(22, -10, 18, 12, 0, 22)
+    ctx.fillStyle = '#B8F34A'
+    ctx.fill()
+
+    // Center leaf vein
+    ctx.beginPath()
+    ctx.moveTo(0, 22)
+    ctx.lineTo(0, -20)
+    ctx.strokeStyle = '#041A12'
+    ctx.lineWidth = 2.5
+    ctx.stroke()
+    ctx.restore()
+  }
+
+  // Primary solid border around portrait badge
+  ctx.beginPath()
+  ctx.arc(portraitBadgeCenterX, portraitBadgeCenterY, portraitBadgeRadius, 0, Math.PI * 2)
+  ctx.strokeStyle = '#B8F34A'
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+
+  // Small Verification Shield / Star Icon at bottom-right of badge
+  const starCenterX = portraitBadgeCenterX + portraitBadgeRadius * 0.72
+  const starCenterY = portraitBadgeCenterY + portraitBadgeRadius * 0.72
+  ctx.beginPath()
+  ctx.arc(starCenterX, starCenterY, 13, 0, Math.PI * 2)
+  ctx.fillStyle = '#08291C'
+  ctx.fill()
+  ctx.strokeStyle = '#B8F34A'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  // Small checkmark inside shield badge
+  ctx.beginPath()
+  ctx.moveTo(starCenterX - 4, starCenterY)
+  ctx.lineTo(starCenterX - 1, starCenterY + 3.5)
+  ctx.lineTo(starCenterX + 4, starCenterY - 3.5)
+  ctx.strokeStyle = '#B8F34A'
+  ctx.lineWidth = 2
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.stroke()
+
+  ctx.restore()
+
+  // Text Column beside Portrait Badge (Starts at X: 206)
+  const textStartX = 206
+
   ctx.fillStyle = '#B8F34A'
-  ctx.font = "700 12px monospace, sans-serif"
+  ctx.font = "700 11px monospace, sans-serif"
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
-  ctx.fillText('PERSONAL ENVIRONMENTAL COMMITMENT', 76, 172)
+  ctx.fillText('GREEN PLEDGE CERTIFICATE  •  OFFICIAL RECOGNITION', textStartX, 172)
 
+  ctx.fillStyle = '#A4B6A8'
+  ctx.font = "600 11px monospace, sans-serif"
+  ctx.fillText('THIS CERTIFIES THAT', textStartX, 194)
+
+  // Recipient Display Name with dynamic scaling
+  const recipientName = (userName && userName.trim())
+    ? userName.trim().toUpperCase()
+    : 'PLANETARY STEWARD'
+
+  let nameFontSize = 32
+  ctx.font = `800 ${nameFontSize}px 'Space Grotesk', system-ui, sans-serif`
+  while (ctx.measureText(recipientName).width > 420 && nameFontSize > 16) {
+    nameFontSize -= 2
+    ctx.font = `800 ${nameFontSize}px 'Space Grotesk', system-ui, sans-serif`
+  }
   ctx.fillStyle = '#F3F7EF'
-  ctx.font = "800 40px 'Space Grotesk', system-ui, sans-serif"
-  ctx.fillText('MY GREEN PLEDGE', 76, 196)
+  ctx.fillText(recipientName, textStartX, 212)
 
+  // Sustainability Promise Subtitle
   ctx.fillStyle = 'rgba(243, 247, 239, 0.85)'
-  ctx.font = "400 15px 'Inter', system-ui, sans-serif"
+  ctx.font = "400 13px 'Inter', system-ui, sans-serif"
   ctx.fillText(
-    'A personal commitment to mindful choices, environmental stewardship, and sustainable action for our living planet.',
-    76,
-    252
+    'Has verified personal commitment to sustainable choices and planetary regeneration.',
+    textStartX,
+    258
   )
 
   // 6. Selected Commitments Grid (Left Column Showcase)
@@ -666,10 +844,25 @@ async function generatePledgeCertificateCanvas(selectedPledges, pledgeDate) {
 
   // Closing Message
   ctx.fillStyle = '#B8F34A'
-  ctx.font = "800 20px 'Space Grotesk', system-ui, sans-serif"
+  ctx.font = "800 18px 'Space Grotesk', system-ui, sans-serif"
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
   ctx.fillText('“Small Actions. Greener Tomorrow.”', 76, 718)
+
+  // Center: Certificate Verification ID Badge
+  const certBadgeText = `VERIFIED CERTIFICATE // ${certificateId || 'ECO-PLG-2026'}`
+  drawRoundedRect(440, 704, 320, 28, 14)
+  ctx.fillStyle = 'rgba(8, 41, 28, 0.88)'
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(184, 243, 74, 0.35)'
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  ctx.fillStyle = '#B8F34A'
+  ctx.font = "700 9.5px monospace, sans-serif"
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(certBadgeText, 600, 718)
 
   // Footer Right: ECOVERSE Branding
   ctx.fillStyle = '#A4B6A8'
@@ -680,6 +873,96 @@ async function generatePledgeCertificateCanvas(selectedPledges, pledgeDate) {
 
   return canvas
 }
+
+/**
+ * Converts a Canvas element into a PNG Blob using canvas.toBlob with fallback.
+ */
+function canvasToBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    if (typeof canvas.toBlob === 'function') {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob)
+        } else {
+          reject(new Error('Canvas toBlob returned null'))
+        }
+      }, 'image/png')
+    } else {
+      try {
+        const dataUrl = canvas.toDataURL('image/png')
+        const arr = dataUrl.split(',')
+        const bstr = atob(arr[1])
+        let n = bstr.length
+        const u8arr = new Uint8Array(n)
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n)
+        }
+        resolve(new Blob([u8arr], { type: 'image/png' }))
+      } catch (err) {
+        reject(err)
+      }
+    }
+  })
+}
+
+/**
+ * Converts a Blob to a proper JavaScript File object with image/png MIME type.
+ */
+function blobToFile(blob, fileName) {
+  return new File([blob], fileName, {
+    type: 'image/png',
+    lastModified: Date.now(),
+  })
+}
+
+/**
+ * Synchronously converts a base64 DataURL into a proper JavaScript File object.
+ */
+function dataURLtoFile(dataUrl, fileName) {
+  const arr = dataUrl.split(',')
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png'
+  const bstr = atob(arr[1])
+  let n = bstr.length
+  const u8arr = new Uint8Array(n)
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n)
+  }
+  return new File([u8arr], fileName, { type: mime, lastModified: Date.now() })
+}
+
+// Pledge commitments list
+const pledgeOptions = [
+  {
+    id: 'waste',
+    text: 'I will reduce unnecessary waste.',
+    category: 'Conservation',
+  },
+  {
+    id: 'water-energy',
+    text: 'I will save water and electricity.',
+    category: 'Efficiency',
+  },
+  {
+    id: 'plastics',
+    text: 'I will avoid single-use plastics.',
+    category: 'Circularity',
+  },
+  {
+    id: 'communities',
+    text: 'I will support greener communities.',
+    category: 'Community',
+  },
+  {
+    id: 'biodiversity',
+    text: 'I will protect plants and biodiversity.',
+    category: 'Ecology',
+  },
+  {
+    id: 'conscious-choices',
+    text: 'I will make more environmentally conscious choices.',
+    category: 'Lifestyle',
+  },
+]
 
 export default function TakeAction() {
   // Action pathways content
@@ -738,40 +1021,6 @@ export default function TakeAction() {
     },
   ]
 
-  // Pledge commitments list
-  const pledgeOptions = [
-    {
-      id: 'waste',
-      text: 'I will reduce unnecessary waste.',
-      category: 'Conservation',
-    },
-    {
-      id: 'water-energy',
-      text: 'I will save water and electricity.',
-      category: 'Efficiency',
-    },
-    {
-      id: 'plastics',
-      text: 'I will avoid single-use plastics.',
-      category: 'Circularity',
-    },
-    {
-      id: 'communities',
-      text: 'I will support greener communities.',
-      category: 'Community',
-    },
-    {
-      id: 'biodiversity',
-      text: 'I will protect plants and biodiversity.',
-      category: 'Ecology',
-    },
-    {
-      id: 'conscious-choices',
-      text: 'I will make more environmentally conscious choices.',
-      category: 'Lifestyle',
-    },
-  ]
-
   // Client-side interactive pledge state
   const [selectedCommitments, setSelectedCommitments] = useState([
     'waste',
@@ -785,8 +1034,37 @@ export default function TakeAction() {
   const [certificateDownloaded, setCertificateDownloaded] = useState(false)
   const [certificateError, setCertificateError] = useState(null)
 
+  // Personalization state
+  const [displayName, setDisplayName] = useState('')
+  const [userPhotoImg, setUserPhotoImg] = useState(null)
+  const [photoUrl, setPhotoUrl] = useState(null)
+  const [photoZoom, setPhotoZoom] = useState(1.0)
+  const [photoOffsetY, setPhotoOffsetY] = useState(0)
+  const [photoError, setPhotoError] = useState(null)
+  const [certId, setCertId] = useState('')
+  const fileInputRef = useRef(null)
+
+  // Live preview & sharing state
+  const [previewDataUrl, setPreviewDataUrl] = useState(null)
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [shareSuccess, setShareSuccess] = useState(null)
+  const [shareError, setShareError] = useState(null)
+  const [shareFallbackNotice, setShareFallbackNotice] = useState(null)
+  const certificateFileRef = useRef(null)
+  const certificateCanvasRef = useRef(null)
+
   // Eco Journey integration: record pledge and unlock Pledge Pioneer badge
   const { recordGreenPledge, hasTakenGreenPledge } = useEcoJourney()
+
+  // Clean up object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (photoUrl) {
+        URL.revokeObjectURL(photoUrl)
+      }
+    }
+  }, [photoUrl])
 
   // Toggle selection
   const toggleCommitment = (id) => {
@@ -812,7 +1090,11 @@ export default function TakeAction() {
       month: 'long',
       day: 'numeric',
     })
+    const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase()
+    const newCertId = `ECO-PLG-${new Date().getFullYear()}-${randomSuffix}`
+
     setPledgeTimestamp(formattedDate)
+    setCertId(newCertId)
     setIsPledged(true)
 
     // Safely and idempotently award +50 Eco Points and unlock Pledge Pioneer badge in Eco Journey
@@ -830,10 +1112,82 @@ export default function TakeAction() {
     setIsPledged(false)
   }
 
+  // Photo upload handler
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setPhotoError(null)
+
+    // Validate MIME types
+    const validMimes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!validMimes.includes(file.type)) {
+      setPhotoError('Unsupported format. Please select a JPG, PNG, or WebP photograph.')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
+    // Validate file size (5 MB max)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      setPhotoError('Photograph exceeds 5 MB. Please select a file under 5 MB.')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
+    try {
+      if (photoUrl) {
+        URL.revokeObjectURL(photoUrl)
+      }
+      const newUrl = URL.createObjectURL(file)
+      const img = new Image()
+      img.onload = () => {
+        setUserPhotoImg(img)
+        setPhotoUrl(newUrl)
+        setPhotoZoom(1.0)
+        setPhotoOffsetY(0)
+      }
+      img.onerror = () => {
+        setPhotoError('Unable to load photograph. Please try another image file.')
+        URL.revokeObjectURL(newUrl)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+      }
+      img.src = newUrl
+    } catch {
+      setPhotoError('Failed to process image file. Please try again.')
+    }
+  }
+
+  // Remove photo handler
+  const handleRemovePhoto = () => {
+    if (photoUrl) {
+      URL.revokeObjectURL(photoUrl)
+    }
+    setUserPhotoImg(null)
+    setPhotoUrl(null)
+    setPhotoZoom(1.0)
+    setPhotoOffsetY(0)
+    setPhotoError(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   // Reset pledge selections
   const handleResetPledge = () => {
     setSelectedCommitments([])
     setIsPledged(false)
+    setDisplayName('')
+    handleRemovePhoto()
+    setPreviewDataUrl(null)
+    setCertId('')
+    setCertificateDownloaded(false)
+    setShareSuccess(null)
+    setShareError(null)
+    setShareFallbackNotice(null)
+    setCertificateError(null)
+    certificateFileRef.current = null
+    certificateCanvasRef.current = null
   }
 
   // Copy pledge certificate text
@@ -877,22 +1231,89 @@ export default function TakeAction() {
     }
   }
 
+  // Generator callback matching options
+  const generateCertificate = useCallback(async () => {
+    const activeCommitments = pledgeOptions.filter((opt) =>
+      selectedCommitments.includes(opt.id)
+    )
+    if (activeCommitments.length === 0) return null
+
+    return await generatePledgeCertificateCanvas(
+      activeCommitments,
+      pledgeTimestamp,
+      {
+        userName: displayName,
+        userPhoto: userPhotoImg,
+        photoScale: photoZoom,
+        photoOffsetY: photoOffsetY,
+        photoOffsetX: 0,
+        certificateId: certId || `ECO-PLG-${new Date().getFullYear()}-001`,
+      }
+    )
+  }, [selectedCommitments, pledgeTimestamp, displayName, userPhotoImg, photoZoom, photoOffsetY, certId])
+
+  // Live preview effect (debounced for smooth slider adjustments)
+  useEffect(() => {
+    if (!isPledged) {
+      certificateFileRef.current = null
+      certificateCanvasRef.current = null
+      return
+    }
+
+    let isMounted = true
+
+    const timer = setTimeout(async () => {
+      setIsGeneratingPreview(true)
+      try {
+        const canvas = await generateCertificate()
+        if (canvas && isMounted) {
+          const dataUrl = canvas.toDataURL('image/png')
+          setPreviewDataUrl(dataUrl)
+          certificateCanvasRef.current = canvas
+
+          // Pre-generate Blob & File in the background so native sharing is instantaneous
+          const cleanName = displayName.trim()
+            ? displayName.trim().replace(/[^a-zA-Z0-9_-]/g, '_')
+            : 'My'
+          const fileName = `ECOVERSE-Green-Pledge-${cleanName}.png`
+
+          try {
+            const blob = await canvasToBlob(canvas)
+            if (isMounted) {
+              certificateFileRef.current = blobToFile(blob, fileName)
+            }
+          } catch {
+            if (isMounted) {
+              certificateFileRef.current = dataURLtoFile(dataUrl, fileName)
+            }
+          }
+        }
+      } catch {
+        // Fallback handled
+      } finally {
+        if (isMounted) {
+          setIsGeneratingPreview(false)
+        }
+      }
+    }, 120)
+
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [isPledged, generateCertificate, displayName])
+
   // Generate and download pledge PNG certificate
   const handleDownloadCertificate = async () => {
     setIsGeneratingCertificate(true)
     setCertificateError(null)
 
     try {
-      const activeCommitments = pledgeOptions.filter((opt) =>
-        selectedCommitments.includes(opt.id)
-      )
+      const canvas = await generateCertificate()
+      if (!canvas) throw new Error('No commitments selected')
 
-      if (activeCommitments.length === 0) {
-        throw new Error('No commitments selected')
-      }
-
-      const canvas = await generatePledgeCertificateCanvas(activeCommitments, pledgeTimestamp)
-      const fileName = 'ECOVERSE-Green-Pledge.png'
+      const cleanName = displayName.trim() ? displayName.trim().replace(/[^a-zA-Z0-9_-]/g, '_') : 'My'
+      const fileName = `ECOVERSE-Green-Pledge-${cleanName}.png`
 
       if (typeof canvas.toBlob === 'function') {
         canvas.toBlob((blob) => {
@@ -920,6 +1341,102 @@ export default function TakeAction() {
       setCertificateError('Unable to generate certificate. Please try again.')
       setTimeout(() => setCertificateError(null), 4000)
       setIsGeneratingCertificate(false)
+    }
+  }
+
+  // WhatsApp sharing handler with native file share + fallback
+  const handleWhatsAppShare = async () => {
+    setIsSharing(true)
+    setShareError(null)
+    setShareSuccess(null)
+    setShareFallbackNotice(null)
+
+    const caption =
+      "I've taken the Green Pledge with ECOVERSE! 🌍💚 I'm committed to making more sustainable choices and building a greener future. Join me in making a difference! #ECOVERSE #GreenPledge"
+
+    const cleanName = displayName.trim()
+      ? displayName.trim().replace(/[^a-zA-Z0-9_-]/g, '_')
+      : 'My'
+    const fileName = `ECOVERSE-Green-Pledge-${cleanName}.png`
+
+    let certificateFile = certificateFileRef.current
+    let canvas = certificateCanvasRef.current
+
+    // If pre-cached file is missing or name has changed, generate it
+    if (!certificateFile || certificateFile.name !== fileName) {
+      try {
+        if (!canvas) {
+          canvas = await generateCertificate()
+        }
+        if (!canvas) throw new Error('Failed to generate certificate canvas')
+        certificateCanvasRef.current = canvas
+
+        const blob = await canvasToBlob(canvas)
+        certificateFile = blobToFile(blob, fileName)
+        certificateFileRef.current = certificateFile
+      } catch {
+        setShareError('Unable to generate certificate for sharing. Please try downloading instead.')
+        setIsSharing(false)
+        return
+      }
+    }
+
+    // Check file-sharing support using navigator.canShare({ files: [certificateFile] })
+    let canShareFiles = false
+    try {
+      if (
+        typeof navigator !== 'undefined' &&
+        typeof navigator.share === 'function' &&
+        typeof navigator.canShare === 'function'
+      ) {
+        canShareFiles = navigator.canShare({ files: [certificateFile] })
+      }
+    } catch {
+      canShareFiles = false
+    }
+
+    // Path A: Native file sharing is supported (Android Chrome / OnePlus Nord 6 / Mobile browsers)
+    if (canShareFiles) {
+      try {
+        await navigator.share({
+          files: [certificateFile],
+          title: 'ECOVERSE Green Pledge',
+          text: caption,
+        })
+        setShareSuccess('Pledge certificate shared successfully!')
+        setTimeout(() => setShareSuccess(null), 4500)
+      } catch (err) {
+        // Handle AbortError properly: if the user cancels sharing, do not automatically download
+        if (err && (err.name === 'AbortError' || err.code === 20)) {
+          return
+        }
+        setShareError('Sharing was interrupted. You can download the certificate and share it manually.')
+        setTimeout(() => setShareError(null), 5000)
+      } finally {
+        setIsSharing(false)
+      }
+      return
+    }
+
+    // Path B: File sharing is genuinely unsupported (Desktop browsers or insecure HTTP context)
+    try {
+      if (canvas) {
+        triggerDataUrlDownload(canvas, fileName)
+      }
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`
+      window.open(waUrl, '_blank', 'noopener,noreferrer')
+
+      setShareFallbackNotice(
+        'Direct image sharing is not supported by your browser. Your certificate has been downloaded — please attach it manually in your WhatsApp chat.'
+      )
+      setTimeout(() => setShareFallbackNotice(null), 8000)
+    } catch {
+      setShareFallbackNotice(
+        'Direct image sharing is not supported by your browser. Please download your certificate and attach it manually in WhatsApp.'
+      )
+      setTimeout(() => setShareFallbackNotice(null), 8000)
+    } finally {
+      setIsSharing(false)
     }
   }
 
@@ -1316,6 +1833,235 @@ export default function TakeAction() {
                       </div>
                     </div>
 
+                    {/* =========================================================
+                        PERSONALIZATION SECTION (NAME, PHOTO & POSITIONING)
+                        ========================================================= */}
+                    <div className="p-5 sm:p-7 rounded-3xl bg-[#08291C]/75 border border-[#39B86B]/30 backdrop-blur-md mb-8">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#39B86B]/20">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="w-4 h-4 text-[#B8F34A]" />
+                            <h4 className="font-heading text-lg sm:text-xl font-bold text-[#F3F7EF]">
+                              Personalize Your Certificate
+                            </h4>
+                            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#B8F34A]/15 border border-[#B8F34A]/30 text-[#B8F34A] font-bold">
+                              Optional
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-[#A4B6A8]">
+                            Customize your certificate with your name and portrait photo.
+                          </p>
+                        </div>
+
+                        {/* Privacy Shield Badge */}
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#041A12]/80 border border-[#39B86B]/30 text-[11px] font-mono text-[#A4B6A8] self-start sm:self-center shrink-0">
+                          <Lock className="w-3.5 h-3.5 text-[#B8F34A]" />
+                          <span>100% Client-Side • Never Uploaded</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        {/* Left: Input Form Controls */}
+                        <div className="lg:col-span-8 space-y-5">
+                          {/* Display Name Input */}
+                          <div>
+                            <label
+                              htmlFor="pledge-display-name"
+                              className="block text-xs font-mono font-semibold uppercase tracking-wider text-[#B8F34A] mb-1.5"
+                            >
+                              Display Name
+                            </label>
+                            <input
+                              id="pledge-display-name"
+                              type="text"
+                              value={displayName}
+                              onChange={(e) => setDisplayName(e.target.value)}
+                              placeholder="e.g. Alex Green (or leave blank for Planetary Steward)"
+                              maxLength={36}
+                              className="w-full px-4 py-2.5 rounded-xl bg-[#041A12]/90 border border-[#39B86B]/35 text-[#F3F7EF] placeholder-[#A4B6A8]/50 text-sm focus:outline-none focus:border-[#B8F34A] transition-colors"
+                            />
+                            <p className="text-[11px] text-[#A4B6A8] mt-1">
+                              Appears prominently in bold lettering on your certificate.
+                            </p>
+                          </div>
+
+                          {/* Photograph Upload & Controls */}
+                          <div>
+                            <span className="block text-xs font-mono font-semibold uppercase tracking-wider text-[#B8F34A] mb-1.5">
+                              Personal Portrait Photograph
+                            </span>
+
+                            {/* Hidden file input */}
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              onChange={handlePhotoSelect}
+                              className="hidden"
+                              id="pledge-photo-input"
+                            />
+
+                            {!photoUrl ? (
+                              <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0D3524] hover:bg-[#0D3524]/80 border border-[#B8F34A]/40 text-xs font-mono font-semibold text-[#F3F7EF] hover:text-[#B8F34A] transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
+                                >
+                                  <Upload className="w-4 h-4 text-[#B8F34A]" />
+                                  <span>Choose Photograph</span>
+                                </button>
+                                <span className="text-xs text-[#A4B6A8]">
+                                  JPG, PNG, WebP up to 5 MB
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0D3524] hover:bg-[#0D3524]/80 border border-[#39B86B]/35 text-xs font-mono text-[#F3F7EF] hover:text-[#B8F34A] transition-colors cursor-pointer"
+                                  >
+                                    <Camera className="w-3.5 h-3.5 text-[#B8F34A]" />
+                                    <span>Replace Photo</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={handleRemovePhoto}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#041A12] hover:bg-red-950/40 border border-red-500/30 text-xs font-mono text-red-300 hover:text-red-200 transition-colors cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                                    <span>Remove Photo</span>
+                                  </button>
+                                </div>
+
+                                {/* Zoom and Position Sliders */}
+                                <div className="p-3.5 rounded-xl bg-[#041A12]/80 border border-[#39B86B]/20 space-y-3">
+                                  {/* Zoom Slider */}
+                                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                                    <span className="text-[#A4B6A8]">Photo Zoom:</span>
+                                    <div className="flex items-center gap-3">
+                                      <input
+                                        type="range"
+                                        min="1"
+                                        max="2"
+                                        step="0.05"
+                                        value={photoZoom}
+                                        onChange={(e) => setPhotoZoom(parseFloat(e.target.value))}
+                                        className="w-32 sm:w-40 accent-[#B8F34A] cursor-pointer"
+                                        aria-label="Adjust photograph zoom"
+                                      />
+                                      <span className="text-[#B8F34A] font-bold w-12 text-right">
+                                        {Math.round(photoZoom * 100)}%
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Vertical Alignment Slider */}
+                                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                                    <span className="text-[#A4B6A8]">Vertical Align:</span>
+                                    <div className="flex items-center gap-3">
+                                      <input
+                                        type="range"
+                                        min="-35"
+                                        max="35"
+                                        step="1"
+                                        value={photoOffsetY}
+                                        onChange={(e) => setPhotoOffsetY(parseFloat(e.target.value))}
+                                        className="w-32 sm:w-40 accent-[#B8F34A] cursor-pointer"
+                                        aria-label="Adjust photograph vertical alignment"
+                                      />
+                                      <span className="text-[#B8F34A] font-bold w-12 text-right">
+                                        {photoOffsetY > 0 ? `+${photoOffsetY}` : photoOffsetY}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {photoError && (
+                              <p className="mt-2 text-xs text-[#FF6B6B] flex items-center gap-1.5 font-mono">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                <span>{photoError}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right: Portrait Avatar Preview Frame */}
+                        <div className="lg:col-span-4 flex flex-col items-center justify-center p-5 rounded-2xl bg-[#041A12]/75 border border-[#39B86B]/25 text-center">
+                          <div className="relative w-28 h-28 rounded-full border-2 border-[#B8F34A] shadow-[0_0_25px_rgba(184,243,74,0.3)] overflow-hidden bg-[#08291C] flex items-center justify-center shrink-0">
+                            {photoUrl ? (
+                              <img
+                                src={photoUrl}
+                                alt="Portrait frame preview"
+                                style={{
+                                  transform: `scale(${photoZoom}) translateY(${photoOffsetY}%)`,
+                                  transformOrigin: 'center center',
+                                }}
+                                className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-75"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-[#B8F34A]">
+                                <Leaf className="w-10 h-10 opacity-75" />
+                              </div>
+                            )}
+
+                            {/* Corner verification shield dot */}
+                            <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-[#08291C] border border-[#B8F34A] flex items-center justify-center text-[#B8F34A]">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          </div>
+
+                          <div className="mt-3">
+                            <span className="font-heading font-bold text-sm text-[#F3F7EF] block truncate max-w-[180px]">
+                              {displayName.trim() || 'Planetary Steward'}
+                            </span>
+                            <span className="text-[10px] font-mono text-[#B8F34A] uppercase tracking-wider">
+                              {photoUrl ? 'Custom Portrait' : 'Stewardship Emblem'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* =========================================================
+                        CERTIFICATE LIVE PREVIEW CONTAINER
+                        ========================================================= */}
+                    <div className="p-4 sm:p-6 rounded-3xl bg-[#08291C]/75 border border-[#39B86B]/30 backdrop-blur-md mb-8">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-[#B8F34A]" />
+                          <h4 className="font-heading text-sm sm:text-base font-bold text-[#F3F7EF] tracking-tight">
+                            Official Certificate Preview
+                          </h4>
+                        </div>
+                        <span className="text-[10px] font-mono text-[#B8F34A] px-2.5 py-0.5 rounded-full bg-[#041A12] border border-[#39B86B]/30">
+                          1200 × 800 HD PNG
+                        </span>
+                      </div>
+
+                      <div className="relative rounded-2xl overflow-hidden border border-[#39B86B]/30 bg-[#041A12] shadow-2xl">
+                        {isGeneratingPreview || !previewDataUrl ? (
+                          <div className="w-full aspect-[1200/800] flex flex-col items-center justify-center gap-3">
+                            <div className="w-8 h-8 rounded-full border-2 border-[#B8F34A] border-t-transparent animate-spin" />
+                            <span className="text-xs font-mono text-[#A4B6A8]">
+                              Rendering Certificate...
+                            </span>
+                          </div>
+                        ) : previewDataUrl ? (
+                          <img
+                            src={previewDataUrl}
+                            alt="Personalized ECOVERSE Green Pledge Certificate Preview"
+                            className="w-full h-auto block select-none"
+                          />
+                        ) : null}
+                      </div>
+                    </div>
+
                     {/* Active Selected Commitments List */}
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
@@ -1349,11 +2095,12 @@ export default function TakeAction() {
                     {/* Confirmation Action Buttons */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-[#39B86B]/20">
                       <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        {/* Download Certificate PNG */}
                         <button
                           type="button"
                           onClick={handleDownloadCertificate}
-                          disabled={isGeneratingCertificate}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-[#B8F34A] text-[#041A12] text-xs sm:text-sm font-semibold hover:bg-[#39B86B] hover:text-white transition-all shadow-[0_0_20px_rgba(184,243,74,0.3)] hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                          disabled={isGeneratingCertificate || isGeneratingPreview}
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-[#B8F34A] text-[#041A12] text-xs sm:text-sm font-heading font-bold hover:bg-[#39B86B] hover:text-white transition-all shadow-[0_0_20px_rgba(184,243,74,0.3)] hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                         >
                           {certificateDownloaded ? (
                             <>
@@ -1366,12 +2113,39 @@ export default function TakeAction() {
                               <span>
                                 {isGeneratingCertificate
                                   ? 'Generating Certificate...'
-                                  : 'Download My Pledge Certificate'}
+                                  : 'Download Certificate (PNG)'}
                               </span>
                             </>
                           )}
                         </button>
 
+                        {/* Share on WhatsApp */}
+                        <button
+                          type="button"
+                          onClick={handleWhatsAppShare}
+                          disabled={isSharing || isGeneratingPreview}
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-[#25D366] text-[#041A12] text-xs sm:text-sm font-heading font-bold hover:bg-[#20bd5a] hover:text-white transition-all shadow-[0_0_20px_rgba(37,211,102,0.35)] hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          {isSharing ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin text-[#041A12]" />
+                              <span>Preparing Share...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="w-4 h-4 fill-current shrink-0"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                              >
+                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.54 1.777.834 2.791.834h.001c3.18 0 5.767-2.586 5.768-5.766 0-1.54-.599-2.989-1.688-4.078-1.09-1.087-2.539-1.686-4.08-1.686l-.001.044zm6.758 8.489c-.279.791-1.378 1.458-1.921 1.549-.49.08-1.12.119-3.239-.768-2.709-1.134-4.472-3.874-4.609-4.053-.13-.18-1.089-1.45-1.089-2.766 0-1.319.689-1.968.939-2.228.25-.26.549-.33.729-.33.18 0 .36.009.52.019.17.01.399-.07.619.46.23.55.789 1.93.859 2.07.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.3.35-.43.47-.14.14-.29.29-.12.58.17.29.75 1.24 1.62 2.01 1.11.99 2.05 1.29 2.34 1.43.29.14.46.12.63-.07.17-.19.73-.85.92-1.14.2-.29.39-.24.66-.14.27.1 1.73.81 2.03.96.3.15.5.22.57.34.07.12.07.7-.21 1.49zM12 2C6.477 2 2 6.477 2 12c0 1.891.523 3.664 1.432 5.184L2 22l4.981-1.399A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" />
+                              </svg>
+                              <span>Share on WhatsApp</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Copy My Pledge */}
                         <button
                           type="button"
                           onClick={handleCopyPledge}
@@ -1390,6 +2164,7 @@ export default function TakeAction() {
                           )}
                         </button>
 
+                        {/* Edit Commitments */}
                         <button
                           type="button"
                           onClick={handleEditPledge}
@@ -1400,6 +2175,7 @@ export default function TakeAction() {
                         </button>
                       </div>
 
+                      {/* Start Over */}
                       <button
                         type="button"
                         onClick={handleResetPledge}
@@ -1410,12 +2186,92 @@ export default function TakeAction() {
                       </button>
                     </div>
 
-                    {certificateError && (
-                      <p className="mt-3 text-xs text-[#FF6B6B] flex items-center gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        <span>{certificateError}</span>
-                      </p>
-                    )}
+                    {/* Dynamic Sharing & Download Alerts */}
+                    <AnimatePresence>
+                      {shareSuccess && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="mt-4 p-3.5 rounded-xl bg-[#39B86B]/15 border border-[#39B86B]/40 text-[#B8F34A] text-xs font-mono flex items-center justify-between gap-3 shadow-[0_0_15px_rgba(57,184,107,0.2)]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-[#B8F34A] shrink-0" />
+                            <span>{shareSuccess}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShareSuccess(null)}
+                            className="text-[#A4B6A8] hover:text-[#F3F7EF] text-xs font-bold"
+                          >
+                            Dismiss
+                          </button>
+                        </motion.div>
+                      )}
+
+                      {shareFallbackNotice && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="mt-4 p-3.5 rounded-xl bg-amber-950/80 border border-amber-500/50 text-amber-200 text-xs font-mono flex items-center justify-between gap-3 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>{shareFallbackNotice}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShareFallbackNotice(null)}
+                            className="text-amber-300 hover:text-white text-xs font-bold cursor-pointer"
+                          >
+                            Dismiss
+                          </button>
+                        </motion.div>
+                      )}
+
+                      {shareError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="mt-4 p-3.5 rounded-xl bg-red-950/80 border border-red-500/50 text-red-200 text-xs font-mono flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                            <span>{shareError}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShareError(null)}
+                            className="text-red-300 hover:text-white text-xs font-bold"
+                          >
+                            Dismiss
+                          </button>
+                        </motion.div>
+                      )}
+
+                      {certificateError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="mt-4 p-3.5 rounded-xl bg-red-950/80 border border-red-500/50 text-red-200 text-xs font-mono flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                            <span>{certificateError}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setCertificateError(null)}
+                            className="text-red-300 hover:text-white text-xs font-bold"
+                          >
+                            Dismiss
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 )}
               </AnimatePresence>
