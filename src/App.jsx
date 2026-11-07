@@ -6,6 +6,7 @@ import Mission from './components/Mission'
 import Solutions from './components/Solutions'
 import Innovations from './components/Innovations'
 import EcoJourney from './components/eco-journey/EcoJourney'
+import EcoArcade from './components/eco-arcade/EcoArcade'
 import TakeAction from './components/TakeAction'
 import Footer from './components/Footer'
 import './App.css'
@@ -38,6 +39,9 @@ export default function App() {
 
         {/* Eco Journey Gamification System */}
         <EcoJourney />
+
+        {/* Eco Arcade Interactive Cleanup Mini-Game */}
+        <EcoArcade />
 
         {/* Take Action Section */}
         <TakeAction />

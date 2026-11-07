@@ -7,22 +7,15 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-[#041A12] border-t border-[#39B86B]/20 py-12 relative z-10 overflow-hidden">
+    <footer className="bg-[#041A12] border-t border-[#39B86B]/20 py-8 sm:py-10 relative z-10 overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-[#39B86B]/15">
+        <div className="flex items-center justify-between pb-6 sm:pb-8 border-b border-[#39B86B]/15">
           {/* Brand */}
           <EcoverseLogo />
-
-          {/* Tagline / Subtitle */}
-          <div className="text-center md:text-right">
-            <p className="text-xs text-[#A4B6A8]">
-              Theme: <span className="text-[#F3F7EF] font-medium">Green Tomorrow – Building a Sustainable Future</span>
-            </p>
-          </div>
         </div>
 
         {/* Bottom row */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#A4B6A8]">
+        <div className="pt-5 sm:pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#A4B6A8]">
           <p>© {new Date().getFullYear()} ECOVERSE. All rights reserved.</p>
 
           <button

@@ -157,7 +157,7 @@ export default function Introduction() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.5, duration: 0.5 }}
-                className="absolute -top-5 right-2 sm:-right-6 glass-card px-3 sm:px-4 py-2 sm:py-3 rounded-2xl border border-[#B8F34A]/30 shadow-xl"
+                className="absolute -top-5 right-2 sm:-right-6 lg:-right-2 xl:-right-6 glass-card px-3 sm:px-4 py-2 sm:py-3 rounded-2xl border border-[#B8F34A]/30 shadow-xl"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-[#B8F34A] animate-ping" />

@@ -49,14 +49,14 @@ export default function Hero() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-[#0D3524]/80 border border-[#B8F34A]/30 text-xs sm:text-sm font-medium text-[#F3F7EF] mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(184,243,74,0.15)]"
+              className="inline-flex items-center gap-1.5 min-[360px]:gap-2 px-2.5 min-[360px]:px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-[#0D3524]/80 border border-[#B8F34A]/30 text-[10px] min-[360px]:text-[11px] min-[390px]:text-xs sm:text-sm font-medium text-[#F3F7EF] mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(184,243,74,0.15)] max-w-full"
             >
-              <span className="w-2 h-2 rounded-full bg-[#B8F34A] animate-ping" />
-              <span className="text-[#B8F34A] font-semibold tracking-wide uppercase">
+              <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-[#B8F34A] animate-ping shrink-0" />
+              <span className="text-[#B8F34A] font-semibold tracking-wide uppercase whitespace-nowrap">
                 GREEN TOMORROW
               </span>
-              <span className="text-[#A4B6A8]">•</span>
-              <span className="text-[#F3F7EF] font-medium tracking-wide">
+              <span className="text-[#A4B6A8] shrink-0">•</span>
+              <span className="text-[#F3F7EF] font-medium tracking-wide whitespace-nowrap">
                 A SUSTAINABLE FUTURE
               </span>
             </motion.div>
@@ -114,7 +114,7 @@ export default function Hero() {
             transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
             className="lg:col-span-5 flex items-center justify-center relative"
           >
-            <div className="relative w-[300px] h-[300px] max-w-[calc(100vw-2rem)] aspect-square sm:w-[380px] sm:h-[380px] md:w-[440px] md:h-[440px] flex items-center justify-center">
+            <div className="relative w-[300px] h-[300px] max-w-[calc(100vw-2rem)] aspect-square sm:w-[380px] sm:h-[380px] md:w-[440px] md:h-[440px] lg:w-[340px] lg:h-[340px] xl:w-[440px] xl:h-[440px] flex items-center justify-center">
               {/* Outer Atmospheric Aura */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#39B86B]/25 via-[#B8F34A]/20 to-transparent blur-3xl animate-pulse" />
 
@@ -136,7 +136,7 @@ export default function Hero() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7, duration: 0.6 }}
-                className="absolute -top-3 left-1 min-[375px]:-left-1 min-[390px]:-left-3 sm:-left-8 glass-card px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-20 border border-[#B8F34A]/30"
+                className="absolute -top-3 left-1 min-[375px]:-left-1 min-[390px]:-left-3 sm:-left-8 lg:-left-2 xl:-left-8 glass-card px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-20 border border-[#B8F34A]/30"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#B8F34A]/20 flex items-center justify-center text-[#B8F34A] shrink-0">
                   <Leaf className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -157,7 +157,7 @@ export default function Hero() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.9, duration: 0.6 }}
-                className="absolute -bottom-3 right-1 min-[375px]:-right-1 min-[390px]:-right-3 sm:-right-8 glass-card px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-20 border border-[#39B86B]/30"
+                className="absolute -bottom-3 right-1 min-[375px]:-right-1 min-[390px]:-right-3 sm:-right-8 lg:-right-2 xl:-right-8 glass-card px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-20 border border-[#39B86B]/30"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#39B86B]/20 flex items-center justify-center text-[#39B86B] shrink-0">
                   <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
